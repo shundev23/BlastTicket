@@ -1,0 +1,14 @@
+<Solution>
+  <Folder Name="/docker/">
+    <File Path="init.sql" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+  </Folder>
+  <Folder Name="/ソリューション項目/">
+    <File Path="docker-compose.yml" />
+  </Folder>
+  <Project Path="BlastTicket.Api/BlastTicket.Api.csproj" />
+  <Project Path="BlastTicket.Core/BlastTicket.Core.csproj" />
+  <Project Path="BlastTicket.Infra/BlastTicket.Infra.csproj" />
+</Solution>
