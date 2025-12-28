@@ -1,6 +1,10 @@
 using System.Text.Json.Serialization;
 using BlastTicket.Infra.Data;
 using Microsoft.AspNetCore.Mvc; // ProblemDetails用
+using BlastTicket.Core.Interfaces;
+using BlastTicket.Infra.Repositories;
+using BlastTicket.Infra.Background;
+using BlastTicket.Core.Models;
 
 var builder = WebApplication.CreateSlimBuilder(args);
 
@@ -12,6 +16,9 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 // DB設定
 var connectionString = "Host=localhost;Port=5432;Database=blast_ticket;Username=admin;Password=password;Pooling=true;Maximum Pool Size=100";
 builder.Services.AddSingleton<IDbConnectionFactory>(_ => new DbConnectionFactory(connectionString));
+builder.Services.AddTransient<IOrderRepository, OrderRepository>();
+builder.Services.AddSingleton<IOrderQueue, OrderQueue>();
+builder.Services.AddHostedService<OrderProcessingWorker>();
 
 var app = builder.Build();
 
@@ -32,6 +39,31 @@ app.MapGet("/health", (IDbConnectionFactory dbFactory) =>
     {
         // 万が一のエラー時は文字列で返す
         return Results.Text(ex.ToString(), statusCode: 500);
+    }
+});
+
+// 注文APIの実装
+app.MapPost("/api/v1/orders", (OrderRequest request, IOrderQueue queue) =>
+{
+    // Request -> Domain Modelへの変換
+    var order = new Order(
+        Id: Guid.NewGuid(),
+        ItemId: request.ItemId,
+        UserId: request.UserId,
+        Quantity: request.Quantity,
+        CreatedAt: DateTime.UtcNow
+        );
+    　
+    // キューに投げる
+    if (queue.TryWrite(order))
+    {
+        // 成功したら202を返す
+        return Results.Accepted();
+    }
+    else
+    {
+        // キューがいっぱいなら503 Service Unavailableを返す（流量制限）
+        return Results.StatusCode(503);
     }
 });
 

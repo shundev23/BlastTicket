@@ -4,7 +4,11 @@ using System.Text;
 
 namespace BlastTicket.Core.Models
 {
-    internal class Order
-    {
-    }
+    public record struct Order(
+        Guid Id,
+        Guid ItemId,
+        Guid UserId,
+        int Quantity,
+        DateTime CreatedAt
+        );
 }
